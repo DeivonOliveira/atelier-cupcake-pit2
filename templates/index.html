@@ -1,931 +1,518 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Atelier do Cupcake | Confeitaria Gourmet</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FDF8F5; color: #3B1E14; }
-    h1, h2, h3, .font-serif-title { font-family: 'Playfair Display', serif; }
-    .bg-cocoa { background-color: #4A1C11; }
-    .bg-cocoa-dark { background-color: #321109; }
-    .text-cocoa { color: #4A1C11; }
-    .bg-peach { background-color: #F5E1D5; }
-    .btn-primary { background-color: #6E2614; color: #FFF; transition: all .2s; }
-    .btn-primary:hover { background-color: #4A1C11; }
-    @media print {
-      .no-print { display: none !important; }
-      body { background: #FFF; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier Cupcake Gourmet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col">
-
-  <div class="bg-cocoa-dark text-amber-100 text-xs py-2 px-4 no-print">
-    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <span id="api-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-900/80 text-emerald-200 font-medium">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          API Python MVC + SQLite Conectada
-        </span>
-        <span class="hidden sm:inline text-amber-200/75">| Cupom de teste: <strong>CUPCAKE10</strong></span>
-      </div>
-      <div class="flex items-center gap-3">
-        <button onclick="app.navigate('logs')" class="underline hover:text-white">Registro de Testes (QA)</button>
-        <label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-950 px-2.5 py-1 rounded border border-amber-700/50">
-          <input type="checkbox" id="admin-toggle" onchange="app.toggleAdmin(this.checked)" class="accent-amber-500">
-          <span class="font-semibold text-amber-200">Modo Administrador</span>
-        </label>
-      </div>
-    </div>
-  </div>
-
-  <header class="bg-cocoa text-white shadow-md sticky top-0 z-30 no-print">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3 cursor-pointer" onclick="app.navigate('home')">
-        <span class="text-3xl">🧁</span>
-        <div>
-          <h1 class="text-xl font-bold tracking-tight leading-none">Atelier do Cupcake</h1>
-          <p class="text-xs text-amber-200/80">Confeitaria Artesanal & Delivery</p>
-        </div>
-      </div>
-
-      <nav class="flex flex-wrap items-center gap-2 sm:gap-5 text-sm font-medium">
-        <button onclick="app.navigate('home')" class="hover:text-amber-300 transition">Vitrine</button>
-        <button onclick="app.navigate('historia')" class="hover:text-amber-300 transition">Historia</button>
-        <button onclick="app.navigate('parceiros')" class="hover:text-amber-300 transition">Parceiros</button>
-        <button onclick="app.navigate('pedidos')" class="hover:text-amber-300 transition">Meus Pedidos</button>
-        <button id="nav-admin" onclick="app.navigate('admin')" class="hidden bg-amber-500 text-cocoa-dark px-3 py-1 rounded-full font-bold text-xs">Painel Admin</button>
-      </nav>
-
-      <div class="flex items-center gap-3">
-        <button onclick="app.navigate('auth')" id="user-btn" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg text-xs sm:text-sm transition">
-          <span>👤</span>
-          <span id="user-label">Entrar / Cadastrar</span>
-        </button>
-        <button onclick="app.navigate('carrinho')" class="relative flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-cocoa-dark font-bold px-3.5 py-2 rounded-lg text-xs sm:text-sm transition">
-          <span>🛒</span>
-          <span class="hidden sm:inline">Carrinho</span>
-          <span id="cart-count" class="bg-cocoa-dark text-white text-xs px-2 py-0.5 rounded-full">0</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-cocoa-dark text-white px-4 py-3 rounded-xl shadow-xl border border-amber-500/40 text-sm"></div>
-
-  <main id="app-view" class="flex-1 max-w-6xl w-full mx-auto px-4 py-8"></main>
-
-  <footer class="bg-cocoa-dark text-amber-200/80 text-xs py-6 px-4 mt-12 no-print">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
-      <p><strong>Atelier do Cupcake</strong> — Projeto Integrador Transdisciplinar em Engenharia de Software II (MVC).</p>
-      <p>Cliente demo: <code class="text-white">cliente@cupcake.com</code> | Senha: <code class="text-white">123456</code></p>
-    </div>
-  </footer>
-
-  <script>
-    const SEED_CUPCAKES = [
-      { id: 1, nome: 'Red Velvet Classico', categoria: 'Tradicionais', descricao: 'Massa aveludada de cacau suave com cobertura cremosa de cream cheese.', preco: 14.90, imagem_emoji: '🧁' },
-      { id: 2, nome: 'Belga Trufado 70%', categoria: 'Especiais', descricao: 'Chocolate belga intenso recheado com ganache meio amargo e raspas.', preco: 16.50, imagem_emoji: '🍫' },
-      { id: 3, nome: 'Pistache Siciliano', categoria: 'Especiais', descricao: 'Massa de baunilha bourbon com creme artesanal de pistache torrado.', preco: 18.90, imagem_emoji: '🌿' },
-      { id: 4, nome: 'Ninho com Nutella', categoria: 'Tradicionais', descricao: 'Massa fofinha de leite Ninho com coracao cremoso de creme de avela.', preco: 15.90, imagem_emoji: '🤎' },
-      { id: 5, nome: 'Limao Siciliano & Merengue', categoria: 'Tradicionais', descricao: 'Curd citrico de limao siciliano finalizado com merengue macaricado.', preco: 14.50, imagem_emoji: '🍋' },
-      { id: 6, nome: 'Cacau Vegano & Frutas Vermelhas', categoria: 'Veganos', descricao: '100% vegetal, sem lactose, com geleia artesanal de framboesa e morango.', preco: 16.00, imagem_emoji: '🍓' }
-    ];
-
-    const app = {
-      state: {
-        route: 'home',
-        isAdmin: false,
-        apiOnline: false,
-        cupcakes: [],
-        categoriaFiltro: 'Todos',
-        buscaFiltro: '',
-        carrinho: JSON.parse(localStorage.getItem('cupcake_cart') || '[]'),
-        cupom: '',
-        cep: '80420-000',
-        freteCalculado: 8.50,
-        usuario: JSON.parse(localStorage.getItem('cupcake_user') || 'null'),
-        pedidos: [],
-        qaLogs: JSON.parse(localStorage.getItem('cupcake_qa_logs') || '[]'),
-        reciboAtual: null
-      },
-
-      logEvent(tipo, descricao) {
-        const entry = { hora: new Date().toLocaleTimeString('pt-BR'), tipo, descricao };
-        this.state.qaLogs.unshift(entry);
-        this.state.qaLogs = this.state.qaLogs.slice(0, 30);
-        localStorage.setItem('cupcake_qa_logs', JSON.stringify(this.state.qaLogs));
-      },
-
-      toast(msg, isError = false) {
-        const el = document.getElementById('toast');
-        el.textContent = (isError ? '⚠️ ' : '✅ ') + msg;
-        el.className = `fixed bottom-5 right-5 z-50 max-w-sm px-4 py-3 rounded-xl shadow-xl text-sm font-medium ${isError ? 'bg-red-800 text-white' : 'bg-cocoa-dark text-white border border-amber-400/50'}`;
-        el.classList.remove('hidden');
-        this.logEvent(isError ? 'ERRO TRATADO' : 'SUCESSO', msg);
-        setTimeout(() => el.classList.add('hidden'), 3800);
-      },
-
-      async init() {
-        try {
-          const res = await fetch('/api/health');
-          if (res.ok) this.state.apiOnline = true;
-        } catch (e) {
-          this.state.apiOnline = false;
-        }
-
-        const badge = document.getElementById('api-badge');
-        if (!this.state.apiOnline) {
-          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-900 text-amber-200 font-medium';
-          badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span> Modo Local (Fallback Offline)';
-        }
-
-        await this.carregarCupcakes();
-        this.atualizarHeader();
-        this.render();
-      },
-
-      async carregarCupcakes() {
-        if (this.state.apiOnline) {
-          const params = new URLSearchParams();
-          if (this.state.categoriaFiltro !== 'Todos') params.set('categoria', this.state.categoriaFiltro);
-          if (this.state.buscaFiltro) params.set('busca', this.state.buscaFiltro);
-          const res = await fetch('/api/cupcakes?' + params.toString());
-          this.state.cupcakes = await res.json();
-        } else {
-          const local = JSON.parse(localStorage.getItem('cupcake_catalog') || JSON.stringify(SEED_CUPCAKES));
-          this.state.cupcakes = local.filter(c => {
-            const matchCat = this.state.categoriaFiltro === 'Todos' || c.categoria === this.state.categoriaFiltro;
-            const matchBusca = !this.state.buscaFiltro || c.nome.toLowerCase().includes(this.state.buscaFiltro.toLowerCase());
-            return matchCat && matchBusca;
-          });
-        }
-      },
-
-      atualizarHeader() {
-        const qtd = this.state.carrinho.reduce((acc, i) => acc + i.quantidade, 0);
-        document.getElementById('cart-count').textContent = qtd;
-        const userLabel = document.getElementById('user-label');
-        userLabel.textContent = this.state.usuario ? this.state.usuario.nome.split(' ')[0] + ' (Perfil)' : 'Entrar / Cadastrar';
-      },
-
-      toggleAdmin(ativo) {
-        this.state.isAdmin = ativo;
-        document.getElementById('nav-admin').classList.toggle('hidden', !ativo);
-        this.toast(ativo ? 'Modo Administrador ativado.' : 'Modo Cliente ativado.');
-        if (ativo) this.navigate('admin');
-        else if (this.state.route === 'admin') this.navigate('home');
-      },
-
-      async navigate(route) {
-        this.state.route = route;
-        if (route === 'home' || route === 'admin') await this.carregarCupcakes();
-        if (route === 'pedidos' || route === 'admin') await this.carregarPedidos();
-        this.render();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      },
-
-      addCarrinho(id) {
-        const prod = this.state.cupcakes.find(c => c.id === id);
-        if (!prod) return;
-        const item = this.state.carrinho.find(i => i.id === id);
-        if (item) item.quantidade += 1;
-        else this.state.carrinho.push({ ...prod, quantidade: 1 });
-        localStorage.setItem('cupcake_cart', JSON.stringify(this.state.carrinho));
-        this.atualizarHeader();
-        this.toast(`"${prod.nome}" adicionado ao carrinho!`);
-      },
-
-      alterarQtd(id, delta) {
-        const idx = this.state.carrinho.findIndex(i => i.id === id);
-        if (idx === -1) return;
-        this.state.carrinho[idx].quantidade += delta;
-        if (this.state.carrinho[idx].quantidade <= 0) this.state.carrinho.splice(idx, 1);
-        localStorage.setItem('cupcake_cart', JSON.stringify(this.state.carrinho));
-        this.atualizarHeader();
-        this.render();
-      },
-
-      getTotais() {
-        const subtotal = this.state.carrinho.reduce((s, i) => s + i.preco * i.quantidade, 0);
-        const desconto = this.state.cupom.trim().toUpperCase() === 'CUPCAKE10' ? subtotal * 0.10 : 0;
-        const frete = subtotal === 0 ? 0 : (subtotal >= 60 ? 0 : this.state.freteCalculado);
-        const total = Math.max(0, subtotal - desconto + frete);
-        return { subtotal, desconto, frete, total };
-      },
-
-      async calcularFrete(cepInput) {
-        this.state.cep = cepInput;
-        const limpo = cepInput.replace(/\D/g, '');
-        if (limpo.length !== 8) {
-          this.toast('CEP invalido! Informe exatamente 8 digitos.', true);
-          return;
-        }
-        if (this.state.apiOnline) {
-          const res = await fetch('/api/frete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cep: limpo, itens: this.state.carrinho, cupom: this.state.cupom })
-          });
-          const data = await res.json();
-          if (data.ok) this.state.freteCalculado = data.frete;
-        } else {
-          this.state.freteCalculado = limpo.startsWith('80') ? 8.50 : 12.90;
-        }
-        this.toast(`Frete calculado para CEP ${cepInput}: R$ ${this.state.freteCalculado.toFixed(2)}`);
-        this.render();
-      },
-
-      aplicarCupom(codigo) {
-        this.state.cupom = codigo.trim().toUpperCase();
-        if (this.state.cupom === 'CUPCAKE10') {
-          this.toast('Cupom CUPCAKE10 aplicado! 10% de desconto.');
-        } else if (this.state.cupom) {
-          this.toast('Cupom invalido. Use CUPCAKE10 para testar.', true);
-          this.state.cupom = '';
-        }
-        this.render();
-      },
-
-      async login(e) {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const senha = document.getElementById('login-senha').value;
-        if (this.state.apiOnline) {
-          const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, senha })
-          });
-          const data = await res.json();
-          if (!data.ok) {
-            this.toast(data.erro, true);
-            return;
-          }
-          this.state.usuario = data.usuario;
-        } else {
-          if (email === 'cliente@cupcake.com' && senha === '123456') {
-            this.state.usuario = {
-              id: 1, nome: 'Cliente Demonstracao', email, cpf: '123.456.789-00', rg: '12.345.678-9',
-              enderecos: [{ id: 1, apelido: 'Casa', rua: 'Rua das Flores', numero: '420', bairro: 'Batel', cep: '80420-000' }]
-            };
-          } else {
-            this.toast('Credenciais invalidas! Use cliente@cupcake.com / 123456.', true);
-            return;
-          }
-        }
-        localStorage.setItem('cupcake_user', JSON.stringify(this.state.usuario));
-        this.atualizarHeader();
-        this.toast(`Bem-vindo(a), ${this.state.usuario.nome}!`);
-        this.navigate('perfil');
-      },
-
-      async cadastrar(e) {
-        e.preventDefault();
-        const payload = {
-          nome: document.getElementById('cad-nome').value,
-          email: document.getElementById('cad-email').value,
-          senha: document.getElementById('cad-senha').value,
-          cpf: document.getElementById('cad-cpf').value,
-          rg: document.getElementById('cad-rg').value
-        };
-        if (this.state.apiOnline) {
-          const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          if (!data.ok) {
-            this.toast(data.erro, true);
-            return;
-          }
-          this.state.usuario = data.usuario;
-        } else {
-          this.state.usuario = { id: Date.now(), ...payload, enderecos: [] };
-        }
-        localStorage.setItem('cupcake_user', JSON.stringify(this.state.usuario));
-        this.atualizarHeader();
-        this.toast('Conta criada com sucesso!');
-        this.navigate('perfil');
-      },
-
-      async recuperarSenha() {
-        const email = prompt('Digite o e-mail cadastrado para desbloquear/redefinir a senha (nova senha padrao: 123456):');
-        if (!email) return;
-        if (this.state.apiOnline) {
-          const res = await fetch('/api/auth/recuperar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, nova_senha: '123456' })
-          });
-          const data = await res.json();
-          this.toast(data.ok ? data.mensagem : data.erro, !data.ok);
-        } else {
-          this.toast('Senha redefinida para 123456!');
-        }
-      },
-
-      logout() {
-        this.state.usuario = null;
-        localStorage.removeItem('cupcake_user');
-        this.atualizarHeader();
-        this.toast('Sessao encerrada.');
-        this.navigate('home');
-      },
-
-      async salvarEndereco(e) {
-        e.preventDefault();
-        const end = {
-          apelido: document.getElementById('end-apelido').value || 'Casa',
-          rua: document.getElementById('end-rua').value,
-          numero: document.getElementById('end-num').value,
-          bairro: document.getElementById('end-bairro').value,
-          cep: document.getElementById('end-cep').value,
-          complemento: ''
-        };
-        if (this.state.apiOnline) {
-          const res = await fetch(`/api/clientes/${this.state.usuario.id}/enderecos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(end)
-          });
-          const data = await res.json();
-          if (data.ok) this.state.usuario.enderecos = data.enderecos;
-        } else {
-          this.state.usuario.enderecos = this.state.usuario.enderecos || [];
-          this.state.usuario.enderecos.push({ id: Date.now(), ...end });
-        }
-        localStorage.setItem('cupcake_user', JSON.stringify(this.state.usuario));
-        this.toast('Novo endereco salvo no perfil!');
-        this.render();
-      },
-
-      async finalizarPedido(e) {
-        e.preventDefault();
-        if (!this.state.usuario) {
-          this.toast('Faca login antes de finalizar o pedido.', true);
-          this.navigate('auth');
-          return;
-        }
-        const endereco = document.getElementById('chk-endereco').value;
-        const pagamento = document.querySelector('input[name="pagamento"]:checked').value;
-        if (!endereco) {
-          this.toast('Cadastre ou informe um endereco de entrega.', true);
-          return;
-        }
-
-        const payload = {
-          cliente_id: this.state.usuario.id,
-          endereco_entrega: endereco,
-          forma_pagamento: pagamento,
-          itens: this.state.carrinho,
-          cep: this.state.cep,
-          cupom: this.state.cupom
-        };
-
-        let novoPedido;
-        if (this.state.apiOnline) {
-          const res = await fetch('/api/pedidos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          if (!data.ok) {
-            this.toast(data.erro, true);
-            return;
-          }
-          novoPedido = { ...data.pedido, ...payload, cliente_nome: this.state.usuario.nome, criado_em: new Date().toLocaleString('pt-BR') };
-        } else {
-          const totais = this.getTotais();
-          novoPedido = {
-            id: Date.now(),
-            codigo: '#PED-' + Math.floor(1000 + Math.random() * 9000),
-            ...payload,
-            ...totais,
-            status: 'Pedido Recebido',
-            cliente_nome: this.state.usuario.nome,
-            criado_em: new Date().toLocaleString('pt-BR')
-          };
-          const hist = JSON.parse(localStorage.getItem('cupcake_orders') || '[]');
-          hist.unshift(novoPedido);
-          localStorage.setItem('cupcake_orders', JSON.stringify(hist));
-        }
-
-        this.state.carrinho = [];
-        this.state.cupom = '';
-        localStorage.setItem('cupcake_cart', '[]');
-        this.atualizarHeader();
-        this.state.reciboAtual = novoPedido;
-        this.toast(`Pedido ${novoPedido.codigo} confirmado!`);
-        this.navigate('recibo');
-      },
-
-      async carregarPedidos() {
-        if (this.state.apiOnline) {
-          const url = (!this.state.isAdmin && this.state.usuario)
-            ? `/api/pedidos?cliente_id=${this.state.usuario.id}`
-            : '/api/pedidos';
-          const res = await fetch(url);
-          this.state.pedidos = await res.json();
-        } else {
-          this.state.pedidos = JSON.parse(localStorage.getItem('cupcake_orders') || '[]');
-        }
-      },
-
-      async salvarCupcakeAdmin(e) {
-        e.preventDefault();
-        const payload = {
-          nome: document.getElementById('adm-nome').value,
-          categoria: document.getElementById('adm-cat').value,
-          preco: parseFloat(document.getElementById('adm-preco').value),
-          imagem_emoji: document.getElementById('adm-emoji').value || '🧁',
-          descricao: document.getElementById('adm-desc').value
-        };
-        if (this.state.apiOnline) {
-          await fetch('/api/cupcakes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        } else {
-          const local = JSON.parse(localStorage.getItem('cupcake_catalog') || JSON.stringify(SEED_CUPCAKES));
-          local.push({ id: Date.now(), ...payload });
-          localStorage.setItem('cupcake_catalog', JSON.stringify(local));
-        }
-        this.toast(`Cupcake "${payload.nome}" cadastrado na vitrine!`);
-        await this.carregarCupcakes();
-        this.render();
-      },
-
-      async excluirCupcakeAdmin(id) {
-        if (this.state.apiOnline) {
-          await fetch(`/api/cupcakes/${id}`, { method: 'DELETE' });
-        } else {
-          const local = JSON.parse(localStorage.getItem('cupcake_catalog') || JSON.stringify(SEED_CUPCAKES));
-          localStorage.setItem('cupcake_catalog', JSON.stringify(local.filter(c => c.id !== id)));
-        }
-        this.toast('Produto removido da vitrine.');
-        await this.carregarCupcakes();
-        this.render();
-      },
-
-      async mudarStatusPedido(id, status) {
-        if (this.state.apiOnline) {
-          await fetch(`/api/pedidos/${id}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
-          });
-        }
-        this.toast(`Status do pedido atualizado para "${status}".`);
-        await this.carregarPedidos();
-        this.render();
-      },
-
-      render() {
-        const el = document.getElementById('app-view');
-        const r = this.state.route;
-
-        if (r === 'home') {
-          const cats = ['Todos', 'Tradicionais', 'Especiais', 'Veganos'];
-          el.innerHTML = `
-            <section class="bg-peach rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-amber-900/10">
-              <div class="max-w-xl">
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-900 bg-white/70 px-3 py-1 rounded-full">Fornada Fresca Todos os Dias</span>
-                <h2 class="text-3xl sm:text-4xl font-bold text-cocoa mt-3 mb-3">Cupcakes artesanais feitos com ingredientes nobres.</h2>
-                <p class="text-sm sm:text-base text-amber-950/80 mb-5">Escolha seus sabores favoritos, aplique o cupom <strong>CUPCAKE10</strong> e receba em casa com entrega rastreada.</p>
-                <div class="flex flex-wrap gap-3">
-                  <input type="text" placeholder="Buscar sabor (ex: Pistache, Red Velvet)..." value="${this.state.buscaFiltro}"
-                    oninput="app.state.buscaFiltro=this.value; app.carregarCupcakes().then(()=>app.render())"
-                    class="px-4 py-2.5 rounded-xl border border-amber-900/20 bg-white text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-amber-700">
-                </div>
-              </div>
-              <div class="text-7xl sm:text-8xl select-none">🧁✨</div>
-            </section>
-
-            <div class="flex flex-wrap items-center gap-2 mb-6">
-              ${cats.map(c => `
-                <button onclick="app.state.categoriaFiltro='${c}'; app.carregarCupcakes().then(()=>app.render())"
-                  class="px-4 py-2 rounded-full text-sm font-semibold transition ${this.state.categoriaFiltro === c ? 'bg-cocoa text-white' : 'bg-white text-cocoa border border-amber-900/15 hover:bg-peach'}">
-                  ${c}
+<body class="bg-amber-50/40 text-gray-800">
+    <!-- Header -->
+    <header class="bg-white sticky top-0 z-40 shadow-sm border-b border-pink-100">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center space-x-2">
+                <span class="text-3xl">🧁</span>
+                <span class="font-serif text-2xl font-bold text-pink-600">Atelier Cupcake</span>
+            </a>
+            <nav class="hidden md:flex items-center space-x-6 font-medium text-gray-600">
+                <a href="#cardapio" class="hover:text-pink-600 transition">Cardápio</a>
+                <a href="#sobre" class="hover:text-pink-600 transition">Sobre Nós</a>
+                <a href="/admin-login" class="text-pink-600 hover:text-pink-700 font-semibold border border-pink-200 px-3 py-1.5 rounded-full hover:bg-pink-50 transition">Painel Admin</a>
+            </nav>
+            <div class="flex items-center space-x-3">
+                <button id="btn-auth" onclick="toggleAuthModal()" class="text-sm font-semibold text-gray-700 hover:text-pink-600 px-3 py-2 rounded-full border border-gray-200 hover:border-pink-300 transition">
+                    👤 Entrar
                 </button>
-              `).join('')}
+                <button onclick="toggleCart()" class="bg-pink-600 text-white px-4 py-2 rounded-full font-medium shadow hover:bg-pink-700 transition flex items-center space-x-2">
+                    <span>🛒 Carrinho</span>
+                    <span id="cart-count" class="bg-white text-pink-600 rounded-full px-2 py-0.5 text-xs font-bold">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 text-white py-16 px-4">
+        <div class="max-w-5xl mx-auto text-center">
+            <span class="bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">Confeitaria Artesanal Gourmet</span>
+            <h1 class="font-serif text-4xl md:text-6xl font-bold mt-4 mb-4">Arte e Sabor em Cada Mordida</h1>
+            <p class="text-lg md:text-xl text-pink-100 mb-8 max-w-2xl mx-auto">Cupcakes preparados diariamente com chocolate belga, favas de baunilha, frutas frescas e coberturas aveludadas.</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#cardapio" class="bg-white text-pink-600 font-bold px-8 py-3 rounded-full shadow-lg hover:bg-pink-50 transition">Ver Cardápio Gourmet</a>
+                <button onclick="toggleAuthModal()" class="bg-pink-700/60 border border-white/40 text-white font-semibold px-6 py-3 rounded-full hover:bg-pink-700 transition">Criar Conta / Login</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cardápio Principal -->
+    <main id="cardapio" class="max-w-7xl mx-auto px-4 py-12">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h2 class="font-serif text-3xl font-bold text-gray-900">Nossos Sabores Exclusivos</h2>
+                <p class="text-sm text-gray-500 mt-1">Use o cupom <span class="font-bold text-pink-600">CUPCAKE10</span> no carrinho para 10% de desconto!</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="filtrarCategoria('Todos')" class="cat-btn px-4 py-2 rounded-full bg-pink-600 text-white text-sm font-medium transition shadow-sm">Todos</button>
+                <button onclick="filtrarCategoria('Tradicionais')" class="cat-btn px-4 py-2 rounded-full bg-white text-gray-600 hover:bg-pink-50 text-sm font-medium transition border border-gray-200">Tradicionais</button>
+                <button onclick="filtrarCategoria('Favoritos')" class="cat-btn px-4 py-2 rounded-full bg-white text-gray-600 hover:bg-pink-50 text-sm font-medium transition border border-gray-200">Favoritos</button>
+                <button onclick="filtrarCategoria('Especiais')" class="cat-btn px-4 py-2 rounded-full bg-white text-gray-600 hover:bg-pink-50 text-sm font-medium transition border border-gray-200">Especiais</button>
+            </div>
+        </div>
+
+        <div id="cupcakes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Carregado via API -->
+        </div>
+    </main>
+
+    <!-- Seção Sobre -->
+    <section id="sobre" class="bg-white border-t border-pink-100 py-12 px-4">
+        <div class="max-w-5xl mx-auto text-center">
+            <h3 class="font-serif text-2xl font-bold text-gray-800 mb-3">Compromisso com a Qualidade</h3>
+            <p class="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+                Cada receita do Atelier Cupcake Gourmet é elaborada com ingredientes selecionados, sem conservantes artificiais, garantindo frescor, textura macia e recheios generosos.
+            </p>
+        </div>
+    </section>
+
+    <!-- Modal de Login / Cadastro do Cliente -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-pink-100">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="font-serif text-2xl font-bold text-gray-800" id="auth-title">Acesso do Cliente</h3>
+                <button onclick="toggleAuthModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              ${this.state.cupcakes.map(c => `
-                <article class="bg-white rounded-2xl p-5 shadow-sm border border-amber-900/10 flex flex-col justify-between hover:shadow-md transition">
-                  <div>
-                    <div class="h-32 bg-peach/60 rounded-xl flex items-center justify-center text-6xl mb-4">${c.imagem_emoji}</div>
-                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900">${c.categoria}</span>
-                    <h3 class="text-xl font-bold text-cocoa mt-2">${c.nome}</h3>
-                    <p class="text-sm text-stone-600 mt-1.5 leading-relaxed">${c.descricao}</p>
-                  </div>
-                  <div class="mt-5 pt-4 border-t border-stone-100 flex items-center justify-between">
-                    <span class="text-lg font-bold text-cocoa">R$ ${Number(c.preco).toFixed(2)}</span>
-                    <button onclick="app.addCarrinho(${c.id})" class="btn-primary px-4 py-2 rounded-xl text-sm font-semibold">
-                      + Adicionar
-                    </button>
-                  </div>
-                </article>
-              `).join('')}
+            <div class="flex space-x-2 mb-4 bg-gray-100 p-1 rounded-xl">
+                <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-1.5 rounded-lg text-sm font-bold bg-white text-pink-600 shadow-sm">Entrar</button>
+                <button id="tab-register" onclick="switchAuthTab('register')" class="flex-1 py-1.5 rounded-lg text-sm font-bold text-gray-600">Cadastrar</button>
             </div>
-          `;
-        }
 
-        else if (r === 'historia') {
-          el.innerHTML = `
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-amber-900/10 max-w-3xl mx-auto">
-              <h2 class="text-3xl font-bold text-cocoa mb-4">Nossa Historia</h2>
-              <p class="text-stone-700 leading-relaxed mb-4">
-                O <strong>Atelier do Cupcake</strong> nasceu da paixao pela confeitaria fina aliada a praticidade do pedido digital. Cada receita e produzida em pequenos lotes diarios, utilizando chocolate belga, baunilha natural e frutas selecionadas.
-              </p>
-              <button onclick="app.navigate('home')" class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold">Explorar Cardapio</button>
-            </div>
-          `;
-        }
+            <div id="auth-feedback" class="hidden p-3 rounded-lg mb-4 text-xs font-semibold text-center"></div>
 
-        else if (r === 'parceiros') {
-          el.innerHTML = `
-            <div class="max-w-4xl mx-auto">
-              <h2 class="text-3xl font-bold text-cocoa mb-6">Nossos Parceiros</h2>
-              <div class="grid sm:grid-cols-3 gap-5">
-                <div class="bg-white p-6 rounded-2xl border border-amber-900/10">
-                  <div class="text-3xl mb-2">🍫</div>
-                  <h3 class="font-bold text-lg">Cacau Nobre Brasil</h3>
-                  <p class="text-sm text-stone-600 mt-1">Fornecedor certificado de chocolates 70% e manteiga de cacau pura.</p>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-amber-900/10">
-                  <div class="text-3xl mb-2">📦</div>
-                  <h3 class="font-bold text-lg">EcoPack Embalagens</h3>
-                  <p class="text-sm text-stone-600 mt-1">Caixas termicas biodegradaveis com berco protetor para transporte seguro.</p>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-amber-900/10">
-                  <div class="text-3xl mb-2">🛵</div>
-                  <h3 class="font-bold text-lg">LogiExpress Entregas</h3>
-                  <p class="text-sm text-stone-600 mt-1">Frota dedicada de entregadores treinados para encomendas delicadas.</p>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-
-        else if (r === 'carrinho') {
-          const totais = this.getTotais();
-          el.innerHTML = `
-            <h2 class="text-3xl font-bold text-cocoa mb-6">Seu Carrinho</h2>
-            ${this.state.carrinho.length === 0 ? `
-              <div class="bg-white rounded-2xl p-10 text-center border border-amber-900/10">
-                <p class="text-4xl mb-3">🛒</p>
-                <p class="text-stone-600 mb-4">Seu carrinho esta vazio no momento.</p>
-                <button onclick="app.navigate('home')" class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold">Voltar para a Vitrine</button>
-              </div>
-            ` : `
-              <div class="grid lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-3">
-                  ${this.state.carrinho.map(item => `
-                    <div class="bg-white p-4 rounded-2xl border border-amber-900/10 flex items-center justify-between gap-4">
-                      <div class="flex items-center gap-3">
-                        <span class="text-3xl">${item.imagem_emoji}</span>
-                        <div>
-                          <h3 class="font-bold text-cocoa">${item.nome}</h3>
-                          <p class="text-xs text-stone-500">Unitario: R$ ${Number(item.preco).toFixed(2)}</p>
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <button onclick="app.alterarQtd(${item.id}, -1)" class="w-8 h-8 rounded-lg bg-peach font-bold">-</button>
-                        <span class="font-bold w-6 text-center">${item.quantidade}</span>
-                        <button onclick="app.alterarQtd(${item.id}, 1)" class="w-8 h-8 rounded-lg bg-peach font-bold">+</button>
-                        <span class="font-bold text-cocoa w-20 text-right">R$ ${(item.preco * item.quantidade).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl border border-amber-900/10 space-y-4 h-fit">
-                  <h3 class="font-bold text-lg text-cocoa">Resumo do Pedido</h3>
-                  <div>
-                    <label class="text-xs font-semibold text-stone-600">Calcular Frete (CEP)</label>
-                    <div class="flex gap-2 mt-1">
-                      <input id="inp-cep" type="text" value="${this.state.cep}" placeholder="00000-000" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                      <button onclick="app.calcularFrete(document.getElementById('inp-cep').value)" class="bg-stone-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">OK</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold text-stone-600">Codigo Promocional</label>
-                    <div class="flex gap-2 mt-1">
-                      <input id="inp-cupom" type="text" value="${this.state.cupom}" placeholder="Ex: CUPCAKE10" class="border rounded-lg px-3 py-1.5 text-sm w-full">
-                      <button onclick="app.aplicarCupom(document.getElementById('inp-cupom').value)" class="bg-stone-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">Aplicar</button>
-                    </div>
-                  </div>
-                  <div class="border-t pt-3 space-y-1.5 text-sm">
-                    <div class="flex justify-between"><span>Subtotal:</span><span>R$ ${totais.subtotal.toFixed(2)}</span></div>
-                    <div class="flex justify-between text-emerald-700"><span>Desconto:</span><span>- R$ ${totais.desconto.toFixed(2)}</span></div>
-                    <div class="flex justify-between"><span>Frete:</span><span>${totais.frete === 0 ? 'GRATIS' : 'R$ ' + totais.frete.toFixed(2)}</span></div>
-                    <div class="flex justify-between font-bold text-lg text-cocoa pt-2 border-t"><span>Total:</span><span>R$ ${totais.total.toFixed(2)}</span></div>
-                  </div>
-                  <button onclick="app.navigate('checkout')" class="btn-primary w-full py-3 rounded-xl font-bold text-sm">Finalizar Compra</button>
-                </div>
-              </div>
-            `}
-          `;
-        }
-
-        else if (r === 'auth') {
-          if (this.state.usuario) { this.navigate('perfil'); return; }
-          el.innerHTML = `
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <form onsubmit="app.login(event)" class="bg-white p-6 rounded-2xl border border-amber-900/10 space-y-4">
-                <h2 class="text-2xl font-bold text-cocoa">Ja sou cliente</h2>
-                <p class="text-xs text-stone-500">Teste o bloqueio errando a senha 3x ou entre com <strong>cliente@cupcake.com</strong> / <strong>123456</strong>.</p>
+            <!-- Form Login -->
+            <form id="form-login" onsubmit="realizarLogin(event)" class="space-y-3">
                 <div>
-                  <label class="text-xs font-semibold">E-mail</label>
-                  <input id="login-email" type="email" required value="cliente@cupcake.com" class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">E-mail:</label>
+                    <input type="email" id="login-email" value="cliente@cupcake.com" required class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
                 </div>
                 <div>
-                  <label class="text-xs font-semibold">Senha</label>
-                  <input id="login-senha" type="password" required value="123456" class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Senha:</label>
+                    <input type="password" id="login-senha" value="123456" required class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
                 </div>
-                <button type="submit" class="btn-primary w-full py-2.5 rounded-xl font-bold text-sm">Entrar</button>
-                <button type="button" onclick="app.recuperarSenha()" class="text-xs text-amber-900 underline block mx-auto">Esqueci minha senha / Desbloquear conta</button>
-              </form>
-
-              <form onsubmit="app.cadastrar(event)" class="bg-white p-6 rounded-2xl border border-amber-900/10 space-y-3">
-                <h2 class="text-2xl font-bold text-cocoa">Quero me cadastrar</h2>
-                <div>
-                  <label class="text-xs font-semibold">Nome Completo</label>
-                  <input id="cad-nome" type="text" required class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="text-xs font-semibold">CPF</label>
-                    <input id="cad-cpf" type="text" placeholder="000.000.000-00" class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
-                  </div>
-                  <div>
-                    <label class="text-xs font-semibold">RG</label>
-                    <input id="cad-rg" type="text" placeholder="00.000.000-0" class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
-                  </div>
-                </div>
-                <div>
-                  <label class="text-xs font-semibold">E-mail</label>
-                  <input id="cad-email" type="email" required class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
-                </div>
-                <div>
-                  <label class="text-xs font-semibold">Senha</label>
-                  <input id="cad-senha" type="password" required class="w-full border rounded-xl px-3 py-2 text-sm mt-1">
-                </div>
-                <button type="submit" class="btn-primary w-full py-2.5 rounded-xl font-bold text-sm">Cadastrar</button>
-              </form>
-            </div>
-          `;
-        }
-
-        else if (r === 'perfil') {
-          const u = this.state.usuario;
-          if (!u) { this.navigate('auth'); return; }
-          el.innerHTML = `
-            <div class="max-w-4xl mx-auto space-y-6">
-              <div class="bg-white p-6 rounded-2xl border border-amber-900/10 flex flex-wrap justify-between items-center gap-4">
-                <div>
-                  <h2 class="text-2xl font-bold text-cocoa">${u.nome}</h2>
-                  <p class="text-sm text-stone-600">E-mail: ${u.email} | CPF: ${u.cpf || 'Nao informado'} | RG: ${u.rg || 'Nao informado'}</p>
-                </div>
-                <button onclick="app.logout()" class="px-4 py-2 rounded-xl bg-red-100 text-red-800 text-xs font-bold">Sair da Conta</button>
-              </div>
-
-              <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-amber-900/10">
-                  <h3 class="font-bold text-lg text-cocoa mb-3">Enderecos Cadastrados</h3>
-                  ${(u.enderecos || []).length === 0 ? '<p class="text-sm text-stone-500">Nenhum endereco cadastrado ainda.</p>' : `
-                    <div class="space-y-2">
-                      ${u.enderecos.map(e => `
-                        <div class="p-3 rounded-xl bg-peach/50 text-sm">
-                          <strong>${e.apelido}:</strong> ${e.rua}, ${e.numero} - ${e.bairro} (CEP: ${e.cep})
-                        </div>
-                      `).join('')}
-                    </div>
-                  `}
-                </div>
-
-                <form onsubmit="app.salvarEndereco(event)" class="bg-white p-6 rounded-2xl border border-amber-900/10 space-y-3">
-                  <h3 class="font-bold text-lg text-cocoa">Adicionar Novo Endereco</h3>
-                  <input id="end-apelido" type="text" placeholder="Apelido (ex: Casa, Trabalho)" class="w-full border rounded-xl px-3 py-2 text-sm">
-                  <div class="grid grid-cols-3 gap-2">
-                    <input id="end-rua" type="text" required placeholder="Rua / Avenida" class="col-span-2 border rounded-xl px-3 py-2 text-sm">
-                    <input id="end-num" type="text" required placeholder="Numero" class="border rounded-xl px-3 py-2 text-sm">
-                  </div>
-                  <div class="grid grid-cols-2 gap-2">
-                    <input id="end-bairro" type="text" required placeholder="Bairro" class="border rounded-xl px-3 py-2 text-sm">
-                    <input id="end-cep" type="text" required placeholder="CEP" class="border rounded-xl px-3 py-2 text-sm">
-                  </div>
-                  <button type="submit" class="btn-primary w-full py-2.5 rounded-xl font-bold text-sm">Salvar Endereco</button>
-                </form>
-              </div>
-            </div>
-          `;
-        }
-
-        else if (r === 'checkout') {
-          if (!this.state.usuario) { this.navigate('auth'); return; }
-          const totais = this.getTotais();
-          const ends = this.state.usuario.enderecos || [];
-          el.innerHTML = `
-            <form onsubmit="app.finalizarPedido(event)" class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-2xl border border-amber-900/10 space-y-5">
-              <h2 class="text-2xl font-bold text-cocoa">Finalizar Pedido</h2>
-              <div>
-                <label class="text-xs font-bold uppercase text-stone-600">Endereco de Entrega</label>
-                ${ends.length > 0 ? `
-                  <select id="chk-endereco" class="w-full border rounded-xl px-3 py-2.5 text-sm mt-1">
-                    ${ends.map(e => `<option value="${e.rua}, ${e.numero} - ${e.bairro} (${e.cep})">${e.apelido}: ${e.rua}, ${e.numero} - ${e.bairro}</option>`).join('')}
-                  </select>
-                ` : `
-                  <input id="chk-endereco" type="text" required placeholder="Digite o endereco completo de entrega..." class="w-full border rounded-xl px-3 py-2.5 text-sm mt-1">
-                `}
-              </div>
-
-              <div>
-                <label class="text-xs font-bold uppercase text-stone-600">Forma de Pagamento</label>
-                <div class="grid grid-cols-3 gap-3 mt-2 text-sm">
-                  <label class="border rounded-xl p-3 flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="pagamento" value="PIX" checked> <span>PIX</span>
-                  </label>
-                  <label class="border rounded-xl p-3 flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="pagamento" value="Cartao de Credito"> <span>Cartao</span>
-                  </label>
-                  <label class="border rounded-xl p-3 flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="pagamento" value="Dinheiro"> <span>Dinheiro</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="bg-peach/60 p-4 rounded-xl text-sm space-y-1">
-                <div class="flex justify-between"><span>Itens (${this.state.carrinho.length}):</span><span>R$ ${totais.subtotal.toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>Desconto:</span><span>- R$ ${totais.desconto.toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>Frete:</span><span>R$ ${totais.frete.toFixed(2)}</span></div>
-                <div class="flex justify-between font-bold text-base text-cocoa pt-2 border-t border-amber-900/10"><span>Total a Pagar:</span><span>R$ ${totais.total.toFixed(2)}</span></div>
-              </div>
-
-              <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold">Confirmar Pedido</button>
+                <button type="submit" class="w-full bg-pink-600 text-white font-bold py-2.5 rounded-xl hover:bg-pink-700 transition shadow">Entrar na Conta</button>
             </form>
-          `;
-        }
 
-        else if (r === 'recibo') {
-          const p = this.state.reciboAtual;
-          if (!p) { this.navigate('pedidos'); return; }
-          el.innerHTML = `
-            <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl border border-amber-900/20 shadow-sm">
-              <div class="text-center border-b pb-4 mb-4">
-                <span class="text-4xl">🧾</span>
-                <h2 class="text-2xl font-bold text-cocoa mt-2">Comprovante de Pedido</h2>
-                <p class="text-sm text-stone-500">Codigo: <strong>${p.codigo}</strong> | Status: <strong>${p.status}</strong></p>
-              </div>
-              <div class="text-sm space-y-2 mb-4">
-                <p><strong>Cliente:</strong> ${p.cliente_nome}</p>
-                <p><strong>Entrega:</strong> ${p.endereco_entrega}</p>
-                <p><strong>Pagamento:</strong> ${p.forma_pagamento}</p>
-              </div>
-              <div class="border-t border-b py-3 my-3 space-y-1 text-sm">
-                ${p.itens.map(i => `<div class="flex justify-between"><span>${i.quantidade}x ${i.nome}</span><span>R$ ${(i.preco * i.quantidade).toFixed(2)}</span></div>`).join('')}
-              </div>
-              <div class="text-right font-bold text-lg text-cocoa mb-6">Total Pago: R$ ${Number(p.total).toFixed(2)}</div>
-              <div class="flex gap-3 no-print">
-                <button onclick="window.print()" class="flex-1 bg-stone-800 text-white py-2.5 rounded-xl text-sm font-semibold">🖨️ Imprimir / Salvar PDF</button>
-                <button onclick="app.navigate('pedidos')" class="flex-1 btn-primary py-2.5 rounded-xl text-sm font-semibold">Ver Meus Pedidos</button>
-              </div>
-            </div>
-          `;
-        }
-
-        else if (r === 'pedidos') {
-          el.innerHTML = `
-            <h2 class="text-3xl font-bold text-cocoa mb-6">Historico de Pedidos</h2>
-            ${this.state.pedidos.length === 0 ? `
-              <div class="bg-white p-8 rounded-2xl text-center border border-amber-900/10">
-                <p class="text-stone-600 mb-4">Nenhum pedido registrado ate o momento.</p>
-                <button onclick="app.navigate('home')" class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold">Fazer Primeiro Pedido</button>
-              </div>
-            ` : `
-              <div class="bg-white rounded-2xl border border-amber-900/10 overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                  <thead class="bg-peach text-cocoa font-bold">
-                    <tr>
-                      <th class="p-4">#Pedido</th>
-                      <th class="p-4">Destinatario / Entrega</th>
-                      <th class="p-4">Pagamento</th>
-                      <th class="p-4">Valor</th>
-                      <th class="p-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y">
-                    ${this.state.pedidos.map(p => `
-                      <tr>
-                        <td class="p-4 font-bold">${p.codigo}</td>
-                        <td class="p-4">${p.cliente_nome || 'Cliente'}<br><span class="text-xs text-stone-500">${p.endereco_entrega}</span></td>
-                        <td class="p-4">${p.forma_pagamento}</td>
-                        <td class="p-4 font-bold">R$ ${Number(p.total).toFixed(2)}</td>
-                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900">${p.status}</span></td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            `}
-          `;
-        }
-
-        else if (r === 'admin') {
-          el.innerHTML = `
-            <div class="space-y-8">
-              <div class="flex items-center justify-between">
-                <h2 class="text-3xl font-bold text-cocoa">Painel Administrativo</h2>
-                <span class="text-xs bg-amber-100 text-amber-900 px-3 py-1 rounded-full font-bold">Gestao de Catalogo & Pedidos</span>
-              </div>
-
-              <div class="grid lg:grid-cols-3 gap-6">
-                <form onsubmit="app.salvarCupcakeAdmin(event)" class="bg-white p-6 rounded-2xl border border-amber-900/10 space-y-3">
-                  <h3 class="font-bold text-lg text-cocoa">Cadastrar Novo Cupcake</h3>
-                  <input id="adm-nome" type="text" required placeholder="Nome do Sabor" class="w-full border rounded-xl px-3 py-2 text-sm">
-                  <div class="grid grid-cols-2 gap-2">
-                    <select id="adm-cat" class="border rounded-xl px-3 py-2 text-sm">
-                      <option>Tradicionais</option>
-                      <option>Especiais</option>
-                      <option>Veganos</option>
-                    </select>
-                    <input id="adm-preco" type="number" step="0.01" required placeholder="Preco (ex: 15.90)" class="border rounded-xl px-3 py-2 text-sm">
-                  </div>
-                  <input id="adm-emoji" type="text" placeholder="Emoji (ex: 🍓)" value="🧁" class="w-full border rounded-xl px-3 py-2 text-sm">
-                  <textarea id="adm-desc" required placeholder="Descricao dos ingredientes..." class="w-full border rounded-xl px-3 py-2 text-sm"></textarea>
-                  <button type="submit" class="btn-primary w-full py-2.5 rounded-xl font-bold text-sm">Salvar na Vitrine</button>
-                </form>
-
-                <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-amber-900/10">
-                  <h3 class="font-bold text-lg text-cocoa mb-3">Produtos Ativos (${this.state.cupcakes.length})</h3>
-                  <div class="divide-y text-sm">
-                    ${this.state.cupcakes.map(c => `
-                      <div class="py-2.5 flex items-center justify-between gap-2">
-                        <div><strong>${c.imagem_emoji} ${c.nome}</strong> <span class="text-xs text-stone-500">(${c.categoria})</span> — R$ ${Number(c.preco).toFixed(2)}</div>
-                        <button onclick="app.excluirCupcakeAdmin(${c.id})" class="text-xs bg-red-100 text-red-800 px-2.5 py-1 rounded-lg font-semibold">Excluir</button>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-white p-6 rounded-2xl border border-amber-900/10">
-                <h3 class="font-bold text-lg text-cocoa mb-4">Controle de Status dos Pedidos</h3>
-                ${this.state.pedidos.length === 0 ? '<p class="text-sm text-stone-500">Nenhum pedido recebido ainda.</p>' : `
-                  <div class="space-y-3 text-sm">
-                    ${this.state.pedidos.map(p => `
-                      <div class="p-4 rounded-xl bg-peach/40 flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <strong>${p.codigo}</strong> — ${p.cliente_nome || 'Cliente'} | Total: <strong>R$ ${Number(p.total).toFixed(2)}</strong>
-                        </div>
-                        <select onchange="app.mudarStatusPedido(${p.id}, this.value)" class="border rounded-lg px-3 py-1.5 bg-white font-semibold">
-                          ${['Pedido Recebido', 'Em Preparo', 'Saiu para Entrega', 'Entregue'].map(st => `
-                            <option value="${st}" ${p.status === st ? 'selected' : ''}>${st}</option>
-                          `).join('')}
-                        </select>
-                      </div>
-                    `).join('')}
-                  </div>
-                `}
-              </div>
-            </div>
-          `;
-        }
-
-        else if (r === 'logs') {
-          el.innerHTML = `
-            <div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl border border-amber-900/10">
-              <div class="flex items-center justify-between mb-4">
+            <!-- Form Cadastro -->
+            <form id="form-register" onsubmit="realizarCadastro(event)" class="space-y-3 hidden">
                 <div>
-                  <h2 class="text-2xl font-bold text-cocoa">Registro de Evidencias & Testes (QA)</h2>
-                  <p class="text-xs text-stone-500">Use esta tela para capturar evidencias de validacoes e erros tratados para o Laudo de Qualidade do PIT II.</p>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Nome Completo:</label>
+                    <input type="text" id="reg-nome" required class="w-full px-3 py-2 border rounded-xl text-sm">
                 </div>
-                <button onclick="app.state.qaLogs=[]; localStorage.removeItem('cupcake_qa_logs'); app.render()" class="text-xs bg-stone-200 px-3 py-1.5 rounded-lg">Limpar Logs</button>
-              </div>
-              <div class="space-y-2 text-xs font-mono">
-                ${this.state.qaLogs.length === 0 ? '<p class="text-stone-500">Nenhuma interacao registrada ainda. Navegue, erre uma senha ou adicione itens para gerar logs.</p>' :
-                  this.state.qaLogs.map(l => `
-                    <div class="p-2.5 rounded-lg border ${l.tipo === 'ERRO TRATADO' ? 'bg-red-50 border-red-200 text-red-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}">
-                      <strong>[${l.hora}] [${l.tipo}]</strong> ${l.descricao}
-                    </div>
-                  `).join('')
-                }
-              </div>
-            </div>
-          `;
-        }
-      }
-    };
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">E-mail:</label>
+                    <input type="email" id="reg-email" required class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">CPF:</label>
+                    <input type="text" id="reg-cpf" placeholder="000.000.000-00" class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Senha:</label>
+                    <input type="password" id="reg-senha" required class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+                <button type="submit" class="w-full bg-pink-600 text-white font-bold py-2.5 rounded-xl hover:bg-pink-700 transition shadow">Criar Minha Conta</button>
+            </form>
 
-    app.init();
-  </script>
+            <div class="mt-4 pt-3 border-t text-center flex justify-between items-center text-xs text-gray-500">
+                <span>Demo: cliente@cupcake.com / 123456</span>
+                <a href="/admin-login" class="text-pink-600 font-semibold hover:underline">Ir para Admin &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Carrinho / Checkout -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex justify-end">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col p-6 overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h3 class="font-serif text-2xl font-bold text-gray-800">Seu Carrinho</h3>
+                <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 space-y-3 mb-4 overflow-y-auto">
+                <p class="text-gray-500 text-center py-8">Seu carrinho está vazio.</p>
+            </div>
+
+            <div class="border-t pt-4 space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span id="cart-subtotal" class="font-bold">R$ 0,00</span>
+                </div>
+                
+                <!-- Cálculo de Frete -->
+                <div class="bg-pink-50 p-3 rounded-xl border border-pink-100">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Calcular Entrega (CEP):</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="cep-input" placeholder="80420-000" class="flex-1 px-3 py-1.5 border rounded-lg text-sm">
+                        <button onclick="calcularFrete()" class="bg-pink-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-pink-700 transition">Calcular</button>
+                    </div>
+                    <p id="frete-resultado" class="text-xs text-pink-700 mt-1 font-medium"></p>
+                </div>
+
+                <!-- Cupom de Desconto -->
+                <div class="flex space-x-2">
+                    <input type="text" id="cupom-input" placeholder="Cupom (CUPCAKE10)" class="flex-1 px-3 py-1.5 border rounded-lg text-sm uppercase">
+                    <button onclick="aplicarCupom()" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-900 transition">Aplicar</button>
+                </div>
+                <p id="cupom-msg" class="text-xs font-medium"></p>
+
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Frete:</span>
+                    <span id="cart-frete" class="font-bold">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Desconto:</span>
+                    <span id="cart-desconto" class="font-bold text-green-600">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold border-t pt-2 text-gray-900">
+                    <span>Total:</span>
+                    <span id="cart-total" class="text-pink-600">R$ 0,00</span>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <input type="text" id="endereco-input" placeholder="Endereço completo de entrega (Rua, Nº, Bairro)" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    <select id="pagamento-select" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <option value="PIX">PIX (Aprovação imediata)</option>
+                        <option value="Cartao de Credito">Cartão de Crédito</option>
+                        <option value="Dinheiro">Dinheiro na Entrega</option>
+                    </select>
+                </div>
+
+                <button onclick="finalizarPedido()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-pink-700 transition">Finalizar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-gray-100 mt-12 py-8 text-center text-sm text-gray-500">
+        <p>&copy; 2026 Atelier Cupcake Gourmet. Todos os direitos reservados. | <a href="/admin-login" class="text-pink-600 hover:underline">Acesso Restrito (Admin)</a></p>
+    </footer>
+
+    <script>
+        let cupcakesGlobais = [];
+        let carrinho = [];
+        let valorFrete = 8.50;
+        let cupomAtivo = '';
+        let usuarioLogado = null;
+
+        const IMAGENS_PADRAO = {
+            1: '/static/img/red_velvet.jpg',
+            2: '/static/img/belga_trufado.jpg',
+            3: '/static/img/ninho_nutella.jpg',
+            4: '/static/img/limao_siciliano.jpg',
+            5: '/static/img/churros_gourmet.jpg',
+            6: '/static/img/frutas_vermelhas.jpg'
+        };
+
+        async function carregarCupcakes() {
+            try {
+                const res = await fetch('/api/cupcakes');
+                cupcakesGlobais = await res.json();
+                renderizarCupcakes(cupcakesGlobais);
+            } catch (err) {
+                console.error("Erro ao carregar cupcakes:", err);
+            }
+        }
+
+        function renderizarCupcakes(lista) {
+            const grid = document.getElementById('cupcakes-grid');
+            if (!lista || lista.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">Nenhum cupcake encontrado.</p>';
+                return;
+            }
+            grid.innerHTML = lista.map(c => {
+                const imgUrl = c.imagem_url || IMAGENS_PADRAO[c.id] || '/static/img/red_velvet.jpg';
+                return `
+                <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden flex flex-col justify-between border border-pink-50 group">
+                    <div class="relative h-56 overflow-hidden bg-pink-50">
+                        <img src="${imgUrl}" alt="${c.nome}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <span class="absolute top-3 left-3 text-xs bg-white/90 backdrop-blur-sm text-pink-700 px-3 py-1 rounded-full font-bold shadow-sm">${c.categoria}</span>
+                    </div>
+                    <div class="p-6 flex flex-col flex-1 justify-between">
+                        <div>
+                            <h3 class="font-serif text-xl font-bold text-gray-800">${c.nome}</h3>
+                            <p class="text-gray-600 text-sm mt-2 leading-relaxed">${c.descricao || ''}</p>
+                        </div>
+                        <div class="mt-6 flex justify-between items-center pt-4 border-t border-gray-100">
+                            <span class="font-serif text-2xl font-bold text-pink-600">R$ ${Number(c.preco).toFixed(2)}</span>
+                            <button onclick="adicionarAoCarrinho(${c.id})" class="bg-pink-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-pink-700 transition shadow">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function filtrarCategoria(cat) {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.textContent === cat) {
+                    btn.className = "cat-btn px-4 py-2 rounded-full bg-pink-600 text-white text-sm font-medium transition shadow-sm";
+                } else {
+                    btn.className = "cat-btn px-4 py-2 rounded-full bg-white text-gray-600 hover:bg-pink-50 text-sm font-medium transition border border-gray-200";
+                }
+            });
+            if (cat === 'Todos') {
+                renderizarCupcakes(cupcakesGlobais);
+            } else {
+                renderizarCupcakes(cupcakesGlobais.filter(c => c.categoria === cat));
+            }
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-modal').classList.toggle('hidden');
+        }
+
+        function toggleAuthModal() {
+            document.getElementById('auth-modal').classList.toggle('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            const formLogin = document.getElementById('form-login');
+            const formReg = document.getElementById('form-register');
+            const tabLogin = document.getElementById('tab-login');
+            const tabReg = document.getElementById('tab-register');
+            const feedback = document.getElementById('auth-feedback');
+            feedback.classList.add('hidden');
+
+            if (tab === 'login') {
+                formLogin.classList.remove('hidden');
+                formReg.classList.add('hidden');
+                tabLogin.className = "flex-1 py-1.5 rounded-lg text-sm font-bold bg-white text-pink-600 shadow-sm";
+                tabReg.className = "flex-1 py-1.5 rounded-lg text-sm font-bold text-gray-600";
+            } else {
+                formLogin.classList.add('hidden');
+                formReg.classList.remove('hidden');
+                tabReg.className = "flex-1 py-1.5 rounded-lg text-sm font-bold bg-white text-pink-600 shadow-sm";
+                tabLogin.className = "flex-1 py-1.5 rounded-lg text-sm font-bold text-gray-600";
+            }
+        }
+
+        async function realizarLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            const fb = document.getElementById('auth-feedback');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, senha })
+                });
+                const data = await res.json();
+                fb.classList.remove('hidden');
+                if (data.ok) {
+                    usuarioLogado = data.usuario;
+                    fb.className = "p-3 rounded-lg mb-4 text-xs font-semibold text-center bg-green-100 text-green-700";
+                    fb.textContent = `Bem-vindo(a), ${usuarioLogado.nome}!`;
+                    document.getElementById('btn-auth').textContent = `👤 ${usuarioLogado.nome.split(' ')[0]}`;
+                    setTimeout(() => toggleAuthModal(), 800);
+                } else {
+                    fb.className = "p-3 rounded-lg mb-4 text-xs font-semibold text-center bg-red-100 text-red-700";
+                    fb.textContent = data.erro || "Falha no login.";
+                }
+            } catch (err) {
+                fb.classList.remove('hidden');
+                fb.textContent = "Erro de conexão.";
+            }
+        }
+
+        async function realizarCadastro(e) {
+            e.preventDefault();
+            const nome = document.getElementById('reg-nome').value;
+            const email = document.getElementById('reg-email').value;
+            const cpf = document.getElementById('reg-cpf').value;
+            const senha = document.getElementById('reg-senha').value;
+            const fb = document.getElementById('auth-feedback');
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ nome, email, cpf, senha })
+                });
+                const data = await res.json();
+                fb.classList.remove('hidden');
+                if (data.ok) {
+                    usuarioLogado = data.usuario;
+                    fb.className = "p-3 rounded-lg mb-4 text-xs font-semibold text-center bg-green-100 text-green-700";
+                    fb.textContent = `Conta criada com sucesso, ${usuarioLogado.nome}!`;
+                    document.getElementById('btn-auth').textContent = `👤 ${usuarioLogado.nome.split(' ')[0]}`;
+                    setTimeout(() => toggleAuthModal(), 800);
+                } else {
+                    fb.className = "p-3 rounded-lg mb-4 text-xs font-semibold text-center bg-red-100 text-red-700";
+                    fb.textContent = data.erro || "Erro ao cadastrar.";
+                }
+            } catch (err) {
+                fb.classList.remove('hidden');
+                fb.textContent = "Erro de conexão.";
+            }
+        }
+
+        function adicionarAoCarrinho(id) {
+            const cupcake = cupcakesGlobais.find(c => c.id === id);
+            if (!cupcake) return;
+            const item = carrinho.find(i => i.id === id);
+            if (item) {
+                item.quantidade++;
+            } else {
+                carrinho.push({ ...cupcake, quantidade: 1 });
+            }
+            atualizarCarrinhoUI();
+            document.getElementById('cart-modal').classList.remove('hidden');
+        }
+
+        function alterarQtd(id, delta) {
+            const item = carrinho.find(i => i.id === id);
+            if (!item) return;
+            item.quantidade += delta;
+            if (item.quantidade <= 0) {
+                carrinho = carrinho.filter(i => i.id !== id);
+            }
+            atualizarCarrinhoUI();
+        }
+
+        function atualizarCarrinhoUI() {
+            const countEl = document.getElementById('cart-count');
+            const itemsEl = document.getElementById('cart-items');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const freteEl = document.getElementById('cart-frete');
+            const descontoEl = document.getElementById('cart-desconto');
+            const totalEl = document.getElementById('cart-total');
+
+            countEl.textContent = carrinho.reduce((sum, i) => sum + i.quantidade, 0);
+
+            if (carrinho.length === 0) {
+                itemsEl.innerHTML = '<p class="text-gray-500 text-center py-8">Seu carrinho está vazio.</p>';
+            } else {
+                itemsEl.innerHTML = carrinho.map(i => {
+                    const imgUrl = i.imagem_url || IMAGENS_PADRAO[i.id] || '/static/img/red_velvet.jpg';
+                    return `
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border">
+                        <div class="flex items-center space-x-3">
+                            <img src="${imgUrl}" alt="${i.nome}" class="w-12 h-12 rounded-lg object-cover border border-pink-100">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800">${i.nome}</h4>
+                                <p class="text-xs text-pink-600 font-semibold">R$ ${Number(i.preco).toFixed(2)} un</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="alterarQtd(${i.id}, -1)" class="w-7 h-7 bg-white border rounded-full font-bold text-sm hover:bg-gray-100">-</button>
+                            <span class="text-sm font-bold w-5 text-center">${i.quantidade}</span>
+                            <button onclick="alterarQtd(${i.id}, 1)" class="w-7 h-7 bg-white border rounded-full font-bold text-sm hover:bg-gray-100">+</button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }
+
+            const subtotal = carrinho.reduce((sum, i) => sum + (Number(i.preco) * i.quantidade), 0);
+            const desconto = (cupomAtivo === 'CUPCAKE10') ? (subtotal * 0.10) : 0.0;
+            const frete = carrinho.length > 0 ? valorFrete : 0.0;
+            const total = Math.max(0, subtotal - desconto + frete);
+
+            subtotalEl.textContent = `R$ ${subtotal.toFixed(2)}`;
+            freteEl.textContent = `R$ ${frete.toFixed(2)}`;
+            descontoEl.textContent = `- R$ ${desconto.toFixed(2)}`;
+            totalEl.textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        async function calcularFrete() {
+            const cep = document.getElementById('cep-input').value;
+            const resEl = document.getElementById('frete-resultado');
+            try {
+                const res = await fetch('/api/frete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cep })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    valorFrete = Number(data.frete);
+                    resEl.textContent = `Frete: R$ ${valorFrete.toFixed(2)} (${data.prazo})`;
+                    resEl.className = "text-xs text-green-700 mt-1 font-medium";
+                    atualizarCarrinhoUI();
+                } else {
+                    resEl.textContent = data.erro;
+                    resEl.className = "text-xs text-red-600 mt-1 font-medium";
+                }
+            } catch (e) {
+                resEl.textContent = "Erro ao consultar CEP.";
+            }
+        }
+
+        function aplicarCupom() {
+            const cupom = document.getElementById('cupom-input').value.trim().toUpperCase();
+            const msgEl = document.getElementById('cupom-msg');
+            if (cupom === 'CUPCAKE10') {
+                cupomAtivo = 'CUPCAKE10';
+                msgEl.textContent = "Cupom CUPCAKE10 (10% OFF) aplicado!";
+                msgEl.className = "text-xs text-green-600 font-semibold";
+            } else {
+                cupomAtivo = '';
+                msgEl.textContent = "Cupom inválido.";
+                msgEl.className = "text-xs text-red-600 font-semibold";
+            }
+            atualizarCarrinhoUI();
+        }
+
+        async function finalizarPedido() {
+            if (carrinho.length === 0) {
+                alert("Adicione pelo menos um cupcake ao carrinho!");
+                return;
+            }
+            const endereco = document.getElementById('endereco-input').value.trim();
+            if (!endereco) {
+                alert("Por favor, preencha o endereço de entrega.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/pedidos', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cliente_id: usuarioLogado ? usuarioLogado.id : 1,
+                        endereco_entrega: endereco,
+                        forma_pagamento: document.getElementById('pagamento-select').value,
+                        cupom: cupomAtivo,
+                        frete: valorFrete,
+                        itens: carrinho
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    alert(`Pedido ${data.pedido.codigo} confirmado! Total: R$ ${Number(data.pedido.total).toFixed(2)}`);
+                    carrinho = [];
+                    cupomAtivo = '';
+                    document.getElementById('endereco-input').value = '';
+                    document.getElementById('cupom-input').value = '';
+                    atualizarCarrinhoUI();
+                    toggleCart();
+                } else {
+                    alert("Erro: " + data.erro);
+                }
+            } catch (e) {
+                alert("Erro de comunicação ao finalizar o pedido.");
+            }
+        }
+
+        carregarCupcakes();
+    </script>
 </body>
 </html>

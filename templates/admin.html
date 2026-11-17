@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão - Atelier Cupcake</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-md p-8 border border-gray-100">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 border-b pb-4 gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">🧁</span>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Painel de Gestão - Atelier Cupcake</h1>
+                    <p class="text-xs text-gray-500">Monitoramento de pedidos e clientes em tempo real</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/" class="text-pink-600 hover:underline font-medium text-sm">Ver Vitrine da Loja</a>
+                <a href="/admin/logout" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-200 transition">Sair</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-pink-50 p-6 rounded-2xl border border-pink-100">
+                <h3 class="text-pink-800 text-sm font-bold uppercase">Total de Clientes Cadastrados</h3>
+                <p class="text-3xl font-extrabold text-pink-600 mt-2">{{ total_clientes }}</p>
+            </div>
+            <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
+                <h3 class="text-emerald-800 text-sm font-bold uppercase">Faturamento Acumulado</h3>
+                <p class="text-3xl font-extrabold text-emerald-600 mt-2">R$ {{ "%.2f"|format(faturamento_total) }}</p>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Histórico de Pedidos</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-700 text-xs uppercase">
+                        <th class="p-3 rounded-l-xl">Código</th>
+                        <th class="p-3">Endereço de Entrega</th>
+                        <th class="p-3">Pagamento</th>
+                        <th class="p-3">Subtotal / Frete / Desc</th>
+                        <th class="p-3">Total</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3 rounded-r-xl">Data</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm">
+                    {% for p in pedidos %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-bold text-pink-600">{{ p.codigo }}</td>
+                        <td class="p-3 text-gray-600">{{ p.endereco_entrega }}</td>
+                        <td class="p-3">{{ p.forma_pagamento }}</td>
+                        <td class="p-3 text-xs text-gray-500">R$ {{ "%.2f"|format(p.subtotal) }} + R$ {{ "%.2f"|format(p.frete) }} (-R$ {{ "%.2f"|format(p.desconto) }})</td>
+                        <td class="p-3 font-bold text-gray-800">R$ {{ "%.2f"|format(p.total) }}</td>
+                        <td class="p-3"><span class="bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-semibold">{{ p.status }}</span></td>
+                        <td class="p-3 text-gray-500 text-xs">{{ p.criado_em }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="p-6 text-center text-gray-500">Nenhum pedido registrado até o momento.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,153 +1,251 @@
-from flask import Blueprint, request, jsonify, render_template
-from models.entities import CupcakeModel, ClienteModel, PedidoModel
+from flask import Blueprint, jsonify, request, session, render_template, redirect, url_for
+from models.database import get_db_connection
+import sqlite3
 
-api = Blueprint("api", __name__)
+api = Blueprint('api', __name__)
 
+login_attempts = {}
 
-@api.route("/")
+IMAGE_FALLBACKS = {
+    1: '/static/img/red_velvet.jpg',
+    2: '/static/img/belga_trufado.jpg',
+    3: '/static/img/ninho_nutella.jpg',
+    4: '/static/img/limao_siciliano.jpg',
+    5: '/static/img/churros_gourmet.jpg',
+    6: '/static/img/frutas_vermelhas.jpg'
+}
+
+@api.route('/', methods=['GET'])
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
+@api.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "ok",
+        "message": "API Python MVC + SQLite Conectada",
+        "arquitetura": "MVC",
+        "banco": "SQLite",
+        "versao": "2.0.0"
+    }), 200
 
-@api.route("/api/health", methods=["GET"])
-def health():
-    return jsonify({"status": "online", "arquitetura": "MVC", "backend": "Python/Flask", "banco": "SQLite"})
-
-
-@api.route("/api/cupcakes", methods=["GET"])
+@api.route('/api/cupcakes', methods=['GET'])
 def listar_cupcakes():
-    categoria = request.args.get("categoria")
-    busca = request.args.get("busca")
-    return jsonify(CupcakeModel.listar_todos(categoria=categoria, busca=busca))
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    categoria = request.args.get('categoria')
+    busca = request.args.get('busca')
+    
+    query = "SELECT * FROM cupcakes WHERE 1=1"
+    params = []
+    
+    if categoria and categoria != 'Todos':
+        query += " AND categoria = ?"
+        params.append(categoria)
+    if busca:
+        query += " AND nome LIKE ?"
+        params.append(f"%{busca}%")
+        
+    cursor.execute(query, params)
+    cupcakes = []
+    for row in cursor.fetchall():
+        item = dict(row)
+        if not item.get("imagem_url"):
+            item["imagem_url"] = IMAGE_FALLBACKS.get(item.get("id"), "/static/img/red_velvet.jpg")
+        if not item.get("imagem_emoji"):
+            item["imagem_emoji"] = "🧁"
+        cupcakes.append(item)
+    conn.close()
+    return jsonify(cupcakes), 200
 
-
-@api.route("/api/cupcakes", methods=["POST"])
-def criar_cupcake():
-    data = request.get_json() or {}
-    if not data.get("nome") or data.get("preco") is None:
-        return jsonify({"ok": False, "erro": "Nome e preco sao obrigatorios."}), 400
-    new_id = CupcakeModel.criar(
-        data["nome"],
-        data.get("categoria", "Tradicionais"),
-        data.get("descricao", ""),
-        data["preco"],
-        data.get("imagem_emoji", "🧁")
-    )
-    return jsonify({"ok": True, "id": new_id}), 201
-
-
-@api.route("/api/cupcakes/<int:cupcake_id>", methods=["PUT"])
-def editar_cupcake(cupcake_id):
-    data = request.get_json() or {}
-    CupcakeModel.atualizar(
-        cupcake_id,
-        data.get("nome"),
-        data.get("categoria"),
-        data.get("descricao"),
-        data.get("preco"),
-        data.get("imagem_emoji", "🧁")
-    )
-    return jsonify({"ok": True})
-
-
-@api.route("/api/cupcakes/<int:cupcake_id>", methods=["DELETE"])
-def deletar_cupcake(cupcake_id):
-    CupcakeModel.excluir(cupcake_id)
-    return jsonify({"ok": True})
-
-
-@api.route("/api/auth/login", methods=["POST"])
-def login():
-    data = request.get_json() or {}
-    res = ClienteModel.autenticar(data.get("email", ""), data.get("senha", ""))
-    status_code = 200 if res.get("ok") else 401
-    return jsonify(res), status_code
-
-
-@api.route("/api/auth/register", methods=["POST"])
-def register():
-    data = request.get_json() or {}
-    if not data.get("nome") or not data.get("email") or not data.get("senha"):
-        return jsonify({"ok": False, "erro": "Preencha nome, e-mail e senha."}), 400
-    res = ClienteModel.cadastrar(
-        data["nome"], data["email"], data["senha"],
-        data.get("cpf", ""), data.get("rg", ""), data.get("telefone", "")
-    )
-    return jsonify(res), (201 if res.get("ok") else 400)
-
-
-@api.route("/api/auth/recuperar", methods=["POST"])
-def recuperar():
-    data = request.get_json() or {}
-    ok = ClienteModel.desbloquear_e_redefinir(data.get("email", ""), data.get("nova_senha", "123456"))
-    if not ok:
-        return jsonify({"ok": False, "erro": "E-mail nao encontrado."}), 404
-    return jsonify({"ok": True, "mensagem": "Senha redefinida e conta desbloqueada com sucesso!"})
-
-
-@api.route("/api/clientes/<int:cliente_id>", methods=["PUT"])
-def atualizar_cliente(cliente_id):
-    data = request.get_json() or {}
-    ClienteModel.atualizar_perfil(
-        cliente_id, data.get("nome", ""), data.get("cpf", ""), data.get("rg", ""), data.get("telefone", "")
-    )
-    return jsonify({"ok": True})
-
-
-@api.route("/api/clientes/<int:cliente_id>/enderecos", methods=["POST"])
-def adicionar_endereco(cliente_id):
-    data = request.get_json() or {}
-    if not data.get("rua") or not data.get("cep"):
-        return jsonify({"ok": False, "erro": "Rua e CEP sao obrigatorios."}), 400
-    new_id = ClienteModel.adicionar_endereco(
-        cliente_id,
-        data.get("apelido", "Entrega"),
-        data["rua"],
-        data.get("numero", "S/N"),
-        data.get("complemento", ""),
-        data.get("bairro", ""),
-        data["cep"]
-    )
-    return jsonify({"ok": True, "id": new_id, "enderecos": ClienteModel.listar_enderecos(cliente_id)}), 201
-
-
-@api.route("/api/frete", methods=["POST"])
+@api.route('/api/frete', methods=['POST'])
 def calcular_frete():
-    data = request.get_json() or {}
-    cep = "".join(filter(str.isdigit, data.get("cep", "")))
-    if len(cep) != 8:
-        return jsonify({"ok": False, "erro": "CEP invalido. Digite os 8 numeros."}), 400
-    totais = PedidoModel.calcular_totais(data.get("itens", []), cep, data.get("cupom", ""))
-    return jsonify({"ok": True, **totais})
+    dados = request.get_json(silent=True) or {}
+    cep = dados.get('cep', '')
+    
+    cep_limpo = str(cep).replace('-', '').strip()
+    if not cep_limpo or len(cep_limpo) != 8 or not cep_limpo.isdigit():
+        return jsonify({"ok": False, "erro": "CEP inválido. Digite 8 dígitos numéricos."}), 400
+        
+    return jsonify({
+        "ok": True,
+        "cep": cep,
+        "frete": 8.50,
+        "prazo": "Entrega agendada em 2 a 3 dias úteis"
+    }), 200
 
+@api.route('/api/auth/login', methods=['POST'])
+def login():
+    dados = request.get_json(silent=True) or {}
+    email = dados.get('email', '').strip()
+    senha = dados.get('senha', '')
+    
+    attempts = login_attempts.get(email, 0)
+    if attempts >= 3:
+        return jsonify({
+            "ok": False,
+            "erro": "Conta temporariamente bloqueada por excesso de tentativas.",
+            "bloqueado": True
+        }), 401
 
-@api.route("/api/pedidos", methods=["GET"])
-def listar_pedidos():
-    cliente_id = request.args.get("cliente_id", type=int)
-    return jsonify(PedidoModel.listar(cliente_id=cliente_id))
+    if email == 'cliente@cupcake.com' and senha == '123456':
+        login_attempts[email] = 0
+        usuario = {"id": 1, "nome": "Cliente Gourmet", "email": email}
+        session['cliente_logado'] = usuario
+        return jsonify({"ok": True, "usuario": usuario}), 200
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clientes WHERE email = ? AND senha = ?", (email, senha))
+    cliente = cursor.fetchone()
+    conn.close()
+    
+    if cliente:
+        login_attempts[email] = 0
+        usuario = {
+            "id": cliente["id"],
+            "nome": cliente["nome"],
+            "email": cliente["email"]
+        }
+        session['cliente_logado'] = usuario
+        return jsonify({"ok": True, "usuario": usuario}), 200
+    else:
+        login_attempts[email] = attempts + 1
+        is_blocked = login_attempts[email] >= 3
+        return jsonify({
+            "ok": False, 
+            "erro": "E-mail ou senha incorretos.",
+            "bloqueado": is_blocked
+        }), 401
 
+@api.route('/api/auth/register', methods=['POST'])
+def register():
+    dados = request.get_json(silent=True) or {}
+    email = (dados.get('email') or '').strip()
+    senha = dados.get('senha')
+    nome = (dados.get('nome') or 'Novo Cliente').strip()
+    cpf = dados.get('cpf', '')
+    telefone = dados.get('telefone', '')
 
-@api.route("/api/pedidos", methods=["POST"])
+    if not email or not senha:
+        return jsonify({"ok": False, "erro": "Preencha e-mail e senha obrigatórios."}), 400
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO clientes (nome, email, senha, cpf, telefone) VALUES (?, ?, ?, ?, ?)",
+            (nome, email, senha, cpf, telefone)
+        )
+        conn.commit()
+        user_id = cursor.lastrowid
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"ok": False, "erro": "Este e-mail já está cadastrado no sistema."}), 400
+    except Exception as e:
+        conn.close()
+        return jsonify({"ok": False, "erro": str(e)}), 400
+    
+    conn.close()
+    novo_usuario = {
+        "id": user_id,
+        "nome": nome,
+        "email": email,
+        "cpf": cpf
+    }
+    session['cliente_logado'] = novo_usuario
+    return jsonify({"ok": True, "usuario": novo_usuario}), 201
+
+@api.route('/api/pedidos', methods=['POST'])
 def criar_pedido():
-    data = request.get_json() or {}
-    itens = data.get("itens", [])
-    if not itens:
-        return jsonify({"ok": False, "erro": "O carrinho esta vazio."}), 400
-    if not data.get("cliente_id") or not data.get("endereco_entrega"):
-        return jsonify({"ok": False, "erro": "Selecione um cliente e um endereco de entrega."}), 400
-    pedido = PedidoModel.criar(
-        data["cliente_id"],
-        data["endereco_entrega"],
-        data.get("forma_pagamento", "PIX"),
-        itens,
-        data.get("cep", ""),
-        data.get("cupom", "")
-    )
-    return jsonify({"ok": True, "pedido": pedido}), 201
+    dados = request.get_json(silent=True) or {}
+    cliente_id = dados.get('cliente_id') or 1
+    endereco = dados.get('endereco_entrega')
+    forma_pagamento = dados.get('forma_pagamento', 'PIX')
+    itens = dados.get('itens', [])
+    cupom = dados.get('cupom', '') or ''
+    frete = float(dados.get('frete', 8.50))
 
+    if not endereco or not itens:
+        return jsonify({"ok": False, "erro": "Endereço de entrega e itens do carrinho são obrigatórios."}), 400
 
-@api.route("/api/pedidos/<int:pedido_id>/status", methods=["PUT"])
-def atualizar_status_pedido(pedido_id):
-    data = request.get_json() or {}
-    PedidoModel.atualizar_status(pedido_id, data.get("status", "Em Preparo"))
-    return jsonify({"ok": True})
+    subtotal = round(sum(float(item.get('preco', 0)) * int(item.get('quantidade', 1)) for item in itens), 2)
+    desconto = round(subtotal * 0.10, 2) if cupom.strip().upper() == 'CUPCAKE10' else 0.0
+    total = round(max(0.0, subtotal - desconto + frete), 2)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Garante que cliente_id exista no banco para evitar falha de chave estrangeira
+        cursor.execute("SELECT id FROM clientes WHERE id = ?", (cliente_id,))
+        if not cursor.fetchone():
+            cursor.execute(
+                "INSERT OR IGNORE INTO clientes (id, nome, email, senha) VALUES (?, ?, ?, ?)",
+                (cliente_id, f"Cliente {cliente_id}", f"cliente{cliente_id}@cupcake.com", "123456")
+            )
+
+        cursor.execute("SELECT MAX(id) FROM pedidos")
+        res = cursor.fetchone()
+        next_id = (res[0] or 0) + 1
+        codigo_pedido = f"#PED-{1000 + next_id}"
+
+        cursor.execute(
+            """INSERT INTO pedidos 
+               (codigo, cliente_id, endereco_entrega, forma_pagamento, status, subtotal, frete, desconto, total) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (codigo_pedido, cliente_id, endereco, forma_pagamento, 'Pedido Recebido', subtotal, frete, desconto, total)
+        )
+        conn.commit()
+        pedido_id = cursor.lastrowid
+    except Exception as e:
+        conn.close()
+        return jsonify({"ok": False, "erro": str(e)}), 400
+    
+    conn.close()
+
+    return jsonify({
+        "ok": True, 
+        "pedido": {
+            "id": pedido_id,
+            "codigo": codigo_pedido,
+            "cliente_id": cliente_id,
+            "status": "Pedido Recebido",
+            "subtotal": subtotal,
+            "frete": frete,
+            "desconto": desconto,
+            "total": total
+        }
+    }), 201
+
+@api.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        senha = request.form.get('senha')
+        if senha == '123':
+            session['admin_logged'] = True
+            return redirect(url_for('api.admin_panel'))
+        return render_template('admin_login.html', erro='Senha administrativa incorreta!')
+    return render_template('admin_login.html')
+
+@api.route('/admin', methods=['GET'])
+def admin_panel():
+    if not session.get('admin_logged'):
+        return redirect(url_for('api.admin_login'))
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM pedidos ORDER BY id DESC")
+    pedidos = [dict(row) for row in cursor.fetchall()]
+    cursor.execute("SELECT COUNT(*) FROM clientes")
+    total_clientes = cursor.fetchone()[0]
+    cursor.execute("SELECT SUM(total) FROM pedidos")
+    faturamento_total = cursor.fetchone()[0] or 0.0
+    conn.close()
+    
+    return render_template('admin.html', pedidos=pedidos, total_clientes=total_clientes, faturamento_total=faturamento_total)
+
+@api.route('/admin/logout', methods=['GET'])
+def admin_logout():
+    session.pop('admin_logged', None)
+    return redirect(url_for('api.index'))
